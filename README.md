@@ -1,2 +1,2 @@
 # devops-shophub
-Frontend and backend for ShopHub platform
+Backend for ShopHub platform
