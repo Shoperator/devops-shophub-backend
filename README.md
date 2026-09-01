@@ -32,6 +32,8 @@ pipeline. Both suites run on every pull request.
 | `JWT_EXPIRES_IN` | `1h` | Access token lifetime |
 | `CORS_ORIGIN` | `*` | Origin of the ShopHub frontend |
 | `PORT` | `3000` | HTTP port |
+| `SHOP_NAMESPACE` | `default` | Namespace the `Shop` resources are created in |
+| `SHOP_BASE_DOMAIN` | `shop.local` | Domain the deployed shop sites are published under |
 
 ## API
 
@@ -65,3 +67,47 @@ routes read it from `Authorization: Bearer <token>`.
 Passwords are stored as bcrypt hashes and never appear in a response. A failed
 sign-in reports the same message whether the username or the password was wrong,
 so the endpoint cannot be used to enumerate accounts.
+
+### Shops
+
+A shop is a site the owner has ShopHub deploy. Every route is signed in and
+works only on the shops of the account the token belongs to, so a shop owned by
+somebody else answers `404` rather than `403`.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/shops` | Create a shop and deploy it |
+| `GET` | `/shops` | The shops this account owns |
+| `GET` | `/shops/:id` | One shop |
+| `PATCH` | `/shops/:id` | Reconfigure a deployed shop |
+| `DELETE` | `/shops/:id` | Remove the shop and its cluster resources |
+
+```json
+{
+  "id": "<uuid>",
+  "name": "Prodavnica zdrave hrane",
+  "slug": "prodavnica-zdrave-hrane-a1b2c3",
+  "availability": "standard",
+  "walletAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f42D0B",
+  "database": "postgresql",
+  "url": "http://prodavnica-zdrave-hrane-a1b2c3.shop.local",
+  "createdAt": "<iso-8601>"
+}
+```
+
+`availability` is `standard` (2 replicas) or `high` (3), and `database` is
+`postgresql` or `redis` — the values the [Shop CRD](https://github.com/slepimis120/devops-shop-operator)
+accepts. `PATCH` takes `availability` and `walletAddress` only: the name and the
+database are settled when the shop is created, because the cluster resources and
+the site's address are named after the name, and the two database engines come
+from different operators.
+
+`name` may hold latin letters, digits and single spaces. `slug` is derived from
+it once — normalized to plain ASCII letters, with a random suffix so two shops
+of the same name cannot collide — and is the name of the shop's resources in the
+cluster.
+
+Creating, reconfiguring and deleting a shop go through `ShopDeploymentService`,
+which builds the `Shop` manifest the shop-operator reconciles. The Kubernetes
+API calls themselves are not implemented yet; the manifest is logged and the URL
+derived from `SHOP_BASE_DOMAIN`.
