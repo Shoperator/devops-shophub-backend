@@ -34,6 +34,9 @@ pipeline. Both suites run on every pull request.
 | `PORT` | `3000` | HTTP port |
 | `SHOP_NAMESPACE` | `default` | Namespace the `Shop` resources are created in |
 | `SHOP_BASE_DOMAIN` | `shop.local` | Domain the deployed shop sites are published under |
+| `KUBERNETES_ENABLED` | `false` | Talk to a cluster. While this is not `true`, shops are recorded but never deployed |
+| `KUBERNETES_AUTH_MODE` | `auto` | `auto`, `in-cluster` or `kubeconfig`. `auto` picks in-cluster when running as a pod |
+| `KUBERNETES_FIELD_MANAGER` | `shophub` | Names ShopHub as the author of the fields it writes |
 
 ## API
 
@@ -107,7 +110,40 @@ it once — normalized to plain ASCII letters, with a random suffix so two shops
 of the same name cannot collide — and is the name of the shop's resources in the
 cluster.
 
+## Deploying a shop
+
 Creating, reconfiguring and deleting a shop go through `ShopDeploymentService`,
-which builds the `Shop` manifest the shop-operator reconciles. The Kubernetes
-API calls themselves are not implemented yet; the manifest is logged and the URL
-derived from `SHOP_BASE_DOMAIN`.
+which writes a single `Shop` custom resource — `shop.shophub.local/v1`, named
+after the slug, in `SHOP_NAMESPACE`. ShopHub creates nothing else: the
+shop-operator watches for those resources and reconciles each one into the
+deployments, services, ingress and database behind the running site, and it
+derives the replica count from `availability`, so ShopHub does not send one.
+
+Creating and reconfiguring are the same call. It POSTs the resource, and on a
+`409` merge-patches the spec instead — which covers both an owner changing a
+setting and a retry of a create the API server accepted but ShopHub never saw
+the answer to. Deleting tolerates a `404`, so a shop removed out of band can
+still be removed here; the operator's children carry owner references, so the
+cluster garbage-collects them.
+
+The site's URL is derived from the slug and `SHOP_BASE_DOMAIN` rather than read
+back from `status.url`, which the operator writes only after it has reconciled —
+too late for the request that created the shop. Both sides build the same host
+from the same slug, but **the domain is hardcoded in the operator**
+(`shop_controller.go`), so `SHOP_BASE_DOMAIN` has to be kept equal to it.
+
+`KUBERNETES_ENABLED=false` logs each manifest instead of sending it, which is
+what lets ShopHub run — and its tests pass — with no cluster. It is off by
+default; the Helm chart turns it on.
+
+Two known gaps: calls carry no timeout, so an API server that accepts a
+connection and then goes quiet holds the request open, and nothing checks at
+startup that the CRD is installed and the credentials are accepted — the first
+shop is where that surfaces.
+
+### Permissions
+
+Running against a real cluster, the pod's service account needs `create`,
+`patch` and `delete` on `shops.shop.shophub.local` in `SHOP_NAMESPACE`. That
+Role and its binding are not in this repository — they belong to the deployment,
+in the `shophub` Helm chart.

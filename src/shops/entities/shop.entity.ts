@@ -22,7 +22,7 @@ export enum ShopDatabase {
 }
 
 /**
- * Columns are exactly the fields of the Shop CRD the shop-operator reconciles, 
+ * Columns are exactly the fields of the Shop CRD the shop-operator reconciles,
  * so a row here is the desired state and the cluster is what follows it.
  */
 @Entity('shops')

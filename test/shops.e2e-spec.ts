@@ -305,7 +305,7 @@ describe('Shops (e2e)', () => {
         .expect(404);
     });
 
-    it('doesn\'t delete shop belonging to another account', async () => {
+    it("doesn't delete shop belonging to another account", async () => {
       const created = await createShop();
       const strangerToken = await register('stranger');
 

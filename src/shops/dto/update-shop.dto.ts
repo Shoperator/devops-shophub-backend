@@ -6,7 +6,7 @@ import {
 } from './wallet-address';
 
 /**
- * Reconfiguring a shop that is already deployed. 
+ * Reconfiguring a shop that is already deployed.
  *
  * Shop name is set once, when it is created, and database is set once, when it is created.
  */
