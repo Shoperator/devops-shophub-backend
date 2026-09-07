@@ -9,10 +9,15 @@ import { KubernetesApiError } from '../kubernetes/kubernetes-api.error';
 import { Shop, ShopAvailability, ShopDatabase } from './entities/shop.entity';
 import { ShopDeploymentService } from './shop-deployment.service';
 
-const settings: Record<string, string> = {
+// Deliberately not the defaults: a test that passes on the fallback would not
+// show that the configured value is the one being used. Reset per test, so one
+// that drops a key cannot leak into the next.
+const CONFIGURED = {
   SHOP_NAMESPACE: 'shops',
-  SHOP_BASE_DOMAIN: 'shop.local',
+  SHOP_BASE_DOMAIN: 'shops.example',
 };
+
+let settings: Record<string, string>;
 
 const SHOP_REF = {
   group: 'shop.shophub.local',
@@ -40,6 +45,7 @@ describe('ShopDeploymentService', () => {
   let client: { create: jest.Mock; patch: jest.Mock; delete: jest.Mock };
 
   beforeEach(async () => {
+    settings = { ...CONFIGURED };
     client = {
       create: jest.fn().mockResolvedValue(undefined),
       patch: jest.fn().mockResolvedValue(undefined),
@@ -115,7 +121,19 @@ describe('ShopDeploymentService', () => {
 
     it('publishes the shop under its own host', async () => {
       await expect(deployment.apply(shop())).resolves.toBe(
-        'http://prodavnica-odece-abc123.shop.local',
+        'http://prodavnica-odece-abc123.shops.example',
+      );
+    });
+
+    // The operator writes the Ingress host and this builds the link to it, from
+    // two settings that have to agree. A cluster that configures neither still
+    // has to end up with a link that works, so the two defaults are the same
+    // domain — see the operator's DefaultBaseDomain.
+    it('falls back to the domain the operator also defaults to', async () => {
+      delete settings.SHOP_BASE_DOMAIN;
+
+      await expect(deployment.apply(shop())).resolves.toBe(
+        'http://prodavnica-odece-abc123.localhost',
       );
     });
 

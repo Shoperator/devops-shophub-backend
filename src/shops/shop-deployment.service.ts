@@ -124,7 +124,7 @@ export class ShopDeploymentService {
     }
 
     // Rejected credentials, an unreachable cluster, or the cluster itself
-    // failing. 
+    // failing.
     if (
       status === null ||
       status === ApiStatus.Unauthorized ||
@@ -171,11 +171,16 @@ export class ShopDeploymentService {
    * Derived rather than read back from the resource's status: the operator
    * writes that only once it has reconciled, so it is never there in time for
    * the request that created the shop. It builds the host from the same slug,
-   * so the two agree — but the domain is hardcoded in the operator, and
-   * `SHOP_BASE_DOMAIN` has to be kept equal to it.
+   * so the two agree as long as they are given the same domain — the operator
+   * takes it as `--shop-base-domain`.
+   *
+   * The default matches the operator's, so a cluster that configures neither
+   * still produces links that work. `localhost` because browsers resolve every
+   * name under it to the loopback address themselves, which is what makes a
+   * shop reachable as soon as it is deployed, with no DNS record to publish.
    */
   private buildUrl(shop: Shop): string {
-    const domain = this.config.get<string>('SHOP_BASE_DOMAIN', 'shop.local');
+    const domain = this.config.get<string>('SHOP_BASE_DOMAIN', 'localhost');
     return `http://${shop.slug}.${domain}`;
   }
 

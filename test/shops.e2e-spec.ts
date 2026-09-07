@@ -85,7 +85,9 @@ describe('Shops (e2e)', () => {
     it('publishes the shop at its own address', async () => {
       const shop = await createShop();
 
-      expect(shop.url).toBe(`http://${shop.slug}.shop.local`);
+      // Nothing sets SHOP_BASE_DOMAIN here, so this is the default, and it
+      // has to be the domain the operator publishes under.
+      expect(shop.url).toBe(`http://${shop.slug}.localhost`);
     });
 
     it('names the cluster resources', async () => {

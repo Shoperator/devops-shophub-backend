@@ -10,8 +10,8 @@ import { classifyKubernetesError } from './kubernetes-api.error';
 import { KubernetesSdk } from './kubernetes-sdk';
 
 /**
- * The real client. Minimal functionality: 
- * it translates the four arguments of a call and normalises whatever comes back out, 
+ * The real client. Minimal functionality:
+ * it translates the four arguments of a call and normalises whatever comes back out,
  * holds no policy of its own (what a 409 or a 404 *means* is decided by the caller).
  */
 export class KubernetesCustomObjectClient implements CustomObjectClient {
@@ -64,7 +64,7 @@ export class KubernetesCustomObjectClient implements CustomObjectClient {
 
   /**
    * The call returns as soon as the resource is marked for deletion.
-  */
+   */
   async delete(ref: CustomResourceRef): Promise<void> {
     await this.call(() =>
       this.api.deleteNamespacedCustomObject({

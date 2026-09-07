@@ -22,7 +22,7 @@ function storedShop(overrides: Partial<Shop> = {}): Shop {
     availability: ShopAvailability.STANDARD,
     walletAddress: creation.walletAddress,
     database: ShopDatabase.POSTGRESQL,
-    url: 'http://prodavnica-odece-abc123.shop.local',
+    url: 'http://prodavnica-odece-abc123.localhost',
     ownerId: OWNER_ID,
     ...overrides,
   } as Shop;
@@ -48,7 +48,7 @@ describe('ShopsService', () => {
       remove: jest.fn((shop: Shop) => Promise.resolve(shop)),
     };
     deployment = {
-      apply: jest.fn().mockResolvedValue('http://a-shop.shop.local'),
+      apply: jest.fn().mockResolvedValue('http://a-shop.localhost'),
       remove: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -121,9 +121,9 @@ describe('ShopsService', () => {
     it('records the URL the deployment answered with', async () => {
       const shop = await shopsService.create(OWNER_ID, creation);
 
-      expect(shop.url).toBe('http://a-shop.shop.local');
+      expect(shop.url).toBe('http://a-shop.localhost');
       expect(shopRepository.save).toHaveBeenLastCalledWith(
-        expect.objectContaining({ url: 'http://a-shop.shop.local' }),
+        expect.objectContaining({ url: 'http://a-shop.localhost' }),
       );
     });
 
@@ -188,7 +188,7 @@ describe('ShopsService', () => {
 
       expect(shop.name).toBe('Prodavnica odeće');
       expect(shop.slug).toBe('prodavnica-odece-abc123');
-      expect(shop.url).toBe('http://a-shop.shop.local');
+      expect(shop.url).toBe('http://a-shop.localhost');
     });
 
     it('reconfigures the deployment with the new settings', async () => {
