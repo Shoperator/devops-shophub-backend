@@ -29,6 +29,9 @@ export async function startShopHubApp(): Promise<ShopHubTestApp> {
   process.env.DB_SYNCHRONIZE = 'true';
   process.env.JWT_SECRET = 'integration-test-secret';
   process.env.JWT_EXPIRES_IN = '15m';
+  // No cluster here, and none needed: the tests are about the HTTP and database
+  // layers. The shops still record the address the operator would publish.
+  process.env.KUBERNETES_ENABLED = 'false';
 
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
